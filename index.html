@@ -4,17 +4,55 @@
         <meta charset="UTF-8" />
         <title>tetris</title>
         <style>
+
+            @font-face {
+                font-family: hzeep;
+                src: url(hzeep.ttf);
+            }
+
             body {
-                font-family: monospace;
+                font-family: hzeep;
                 background: black;
                 color: green;
                 font-weight: bold;
             }
+
+            #table, body {
+                text-shadow: 0 0 5px green;
+            }
+
+            main {
+                display: flex;
+                gap: 2rem;
+            }
         </style>
     </head>
     <body>
-        <div id='frame' />
-        <pre id='table' />
+        <h1>Teatris deez nuts</h1>
+
+        <main>
+            <div>
+                level = <span id="level">1</span>
+                <br>
+                score = <span id="score">0</span>
+                <pre id='table' />
+            </div>
+
+            <div>
+                <br>
+                next:
+                <pre id="next-tetramino"></pre>
+            </div>
+        </main>
+
+<pre>
+a      - left
+d      - right
+s      - faster drop
+r      - rotate
+space  - drop
+</pre>
+
     </body>
     
     <script src="index.js"></script>
