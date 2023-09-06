@@ -4,35 +4,35 @@ const W = 10
 const tetraminos = [
     [
         0,  1,
-        W, W+1,  
+        W, W+1,         // 0: 'O'
     ],
 
-    [-1, 0, 1, 2],
+    [-1, 0, 1, 2],      // 1: 'I'
 
     [
-        -1, 0, 1,
+        -1, 0, 1,       // 2: 'T'
             W,
     ],
 
     [
             -W,
-             0,
+             0,         // 3: 'J'
         W-1, W,
     ],
 
     [
         -W,
-         0,
+         0,             // 4: 'L'
          W, W+1
     ],
 
     [
-             0, 1,
+             0, 1,      // 5: 'S'
         W-1, W
     ],
 
     [
-        -1, 0,
+        -1, 0,          // 6: 'Z'
             W, W+1
     ]
 ];
@@ -138,12 +138,15 @@ function clearLines() {
         if (clear) {
             state.fill(false, y * W, y * W + W);
 
+            // Push down
             for (let i = y * W + W - 1; i >= 0; i--) {
                 state[i] = state[i - W];
             }
 
             clearedLines++;
-            y--;
+
+            // Pushed down, repeat on the same line
+            y++;
         }
     }
 
