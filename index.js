@@ -72,6 +72,7 @@ const Move = Object.freeze({
 
 let drop = dropNormal;
 let dropGlitchActive = false;
+let dropGlitchUnlocked = false;
 let overflowGlitchActive = false;
 
 
@@ -90,6 +91,13 @@ function main() {
             }
         }
     );
+
+    resetCheckboxes();
+
+    let highScore = localStorage.getItem("highScore") || 0;
+    document.getElementById("high-score").innerText = highScore;
+
+    checkHighScore();
 
     spawnNext();
     setInterval(gameLoop, 1 / 60 * 1000); // 60 FPS if pc fast // TODO: fix that
@@ -135,6 +143,8 @@ function spawnNext() {
 }
 
 function resetGame() {
+    checkHighScore();
+
     level = 1;
     score = 0;
     state.fill(false);
@@ -142,6 +152,10 @@ function resetGame() {
     currentTPos = SPAWN;
     nextTetramino = randomTetramino();
     currentTetramino = randomTetramino();
+
+    drop = dropNormal;
+
+    resetCheckboxes();
 }
 
 function clearLines() {
@@ -183,6 +197,15 @@ function updateScore(newScore) {
 
     document.getElementById("score").innerText = score;
     document.getElementById("level").innerText = level;
+}
+
+function checkHighScore() {
+    let highScore = localStorage.getItem("highScore") || 0;
+
+    if (score >= highScore) {
+        localStorage.setItem("highScore", score);
+        document.getElementById("high-score").innerText = score;
+    }
 }
 
 
@@ -374,9 +397,19 @@ function drawTable() {
 function activateGlitch(checkbox) {
     switch (checkbox.id) {
         case "wall-hack-glitch": {
+            if (score < 5) {
+                checkbox.checked = false;
+                return;
+            };
+
             dropGlitchActive = !dropGlitchActive;
 
             drop = dropGlitchActive ? dropGlitched : dropNormal;
+
+            if (!dropGlitchUnlocked) {
+                updateScore(score - 5);
+            }
+
             break;
         }
 
@@ -386,6 +419,15 @@ function activateGlitch(checkbox) {
         }
 
         default: throw new Error(`unknown glitch '${checkbox.id}'`);
+    }
+}
+
+
+function resetCheckboxes() {
+    for (let span of document.getElementsByClassName("checkbox")) {
+        for (let checkbox of  span.getElementsByTagName("input")) {
+            checkbox.checked = false;
+        }
     }
 }
 

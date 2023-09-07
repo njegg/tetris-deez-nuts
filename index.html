@@ -72,12 +72,11 @@
                 <br>
                 score = <span id="score">0</span>
                 <br>
-                $ <span id="money">0</span>
+
                 <pre id='table' />
             </div>
 
             <div>
-                <br>
                 <br>
                 next:
                 <pre id="next-tetramino"></pre>
@@ -86,16 +85,16 @@
                 <br>
 
                 <div id="glitch-shop">
-                    <span class="checkbox">
-                        <input
-                            type="checkbox"
-                            id="overflow-glitch"
-                            onchange="activateGlitch(this)"
-                        />
-                        <label for="overflow-glitch">overflow</label>
-                    </span>
+                    <!-- <span class="checkbox"> -->
+                    <!--     <input -->
+                    <!--         type="checkbox" -->
+                    <!--         id="overflow-glitch" -->
+                    <!--         onchange="activateGlitch(this)" -->
+                    <!--     /> -->
+                    <!--     <label for="overflow-glitch">overflow</label> -->
+                    <!-- </span> -->
                     
-                    <span>$0</span>
+                    <!-- <span>$x</span> -->
 
                     <span class="checkbox">
                         <input
@@ -106,7 +105,7 @@
                         <label for="wall-hack-glitch">wall hack drop</label>
                     </span>
 
-                    <span>$0</span>
+                    <span>$5</span>
                 </div>
             </div>
         </main>
@@ -117,6 +116,8 @@ d      - right
 s      - faster drop
 r      - rotate
 space  - drop
+
+high score: <span id="high-score"></span>
 </pre>
 
     </body>
