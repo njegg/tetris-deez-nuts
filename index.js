@@ -51,7 +51,6 @@ let scoreLines = [0, 1, 3, 5, 8];
 let currentTetramino = randomTetramino();
 let nextTetramino = randomTetramino();
 let currentTPos = 5;
-let lastTPos = 0;
 
 let state = new Array(H * W).fill(false);
 const NEXT_W = 5;
@@ -61,6 +60,12 @@ let table = document.getElementById('table');
 
 let inputQueue = [];
 
+const Move = Object.freeze({
+    DOWN: W,
+    LEFT: -1,
+    RIGHT: 1,
+    NONE: 0,
+});
 
 function main() {
     window.addEventListener(
@@ -76,8 +81,9 @@ function main() {
                     break;
             }
         }
-    )
+    );
 
+    spawnNext();
     setInterval(gameLoop, 1 / 60 * 1000); // 60 FPS if pc fast // TODO: fix that
 }
 
@@ -89,7 +95,7 @@ function gameLoop() {
 
     if (frame % framesToDropTetramino[level] | 0 != 0) return; 
 
-    if (!tryMove(currentTPos + W)) {
+    if (!tryMove(Move.DOWN)) {
         spawnNext();
     }
 
@@ -113,6 +119,11 @@ function spawnNext() {
         alert("zuLa Luz LLLLLLLLLLLLL777");
         resetGame();
     }
+
+    setState(true, Move.NONE);
+
+    drawTable();
+    drawNextTetramino();
 }
 
 function resetGame() {
@@ -162,28 +173,75 @@ function updateScore(newScore) {
     document.getElementById("level").innerText = level;
 }
 
-function tryMove(pos) {
-    // Clear state
-    currentTetramino
-        .forEach(x => state[x + currentTPos] = false);
+function canBePlaced(tetramino, onPos) {
+    return tetramino
+        .map(x => x + onPos)
+        .every(x => x < H * W && !state[x]);
+}
+
+/**
+  * @param {Move} move - how much
+  */
+function tryMove(move) {
+    setState(false, Move.NONE);
     
-    let canMoveToPos = currentTetramino
-        .map(x => x + pos)
-        .every(dx => dx < H * W && !state[dx]);
+    let canMove = canBePlaced(currentTetramino, currentTPos + move);
 
-    if (canMoveToPos) {
-        currentTetramino
-            .forEach(x => state[x + pos] = true);
-
-        lastTPos = currentTPos;
-        currentTPos = pos;
-    } else {
-        // Restore
-        currentTetramino
-            .forEach(x => state[x + currentTPos] = true);
+    if (canMove) {
+        // Move the center of the tetramino (0)
+        currentTPos = getPositionInTableWithMove(0, move);
     }
 
-    return canMoveToPos;
+    setState(true, Move.NONE);
+
+    return canMove;
+}
+
+/**
+  *  @param {boolean} draw - 'draws' tetramino to state table with false or true
+  *  @param {Move} move - offset
+  */
+function setState(draw, move = Move.NONE) {
+    currentTetramino
+        .forEach(x => state[getPositionInTableWithMove(x, move)] = draw);
+}
+
+/**
+* @description moves a single block of tetramino by some amount
+* and moves overflows to correct row
+* 
+* @param {number} point
+* @param {Move} move
+*/
+function getPositionInTableWithMove(point, move = Move.NONE) {
+    let x = mod(currentTPos, W);
+    let y = currentTPos / W | 0;
+
+    let dx = move % W;
+    let dy = move / W | 0;
+
+    x = mod((x + dx), W);
+    y = y + dy;
+
+
+    let px = mod(point, W);
+    let py = point / W | 0;
+
+    if (point == -W+1) {
+        px = 1;
+        py = -1;
+    } else if (point == W-1) {
+        px = -1, py = 1;
+    }
+
+    x = mod((x + px), W);
+    y = y + py;
+
+    return y * W + x;
+}
+
+function mod(n, m) {
+  return ((n % m) + m) % m;
 }
 
 
@@ -192,28 +250,36 @@ function input() {
         let key = inputQueue.pop();
 
         switch (key) {
-            case "a": tryMove(currentTPos - 1); break;
-            case "d": tryMove(currentTPos + 1); break;
-            case "s": tryMove(currentTPos + W); break;
-            case " ": drop(); break;
+            case "a": tryMove(Move.LEFT); break;
+            case "d": tryMove(Move.RIGHT); break;
+            case "s": tryMove(Move.DOWN); break;
+            case " ": dropGliched(); break;
             case "r": rotate(); break;
         }
     }
 }
 
 
-// Cursed
-function drop() {
-    let bottom = (W * H) - (W - currentTPos % W)
+/**
+ * Calculates position bottom up
+ */
+function dropGliched() {
+    let bottom = (W * H) - mod(W - currentTPos, W)
 
-    while (!tryMove(bottom)) bottom -= W;
+    setState(false, Move.NONE);
+
+    while (!canBePlaced(currentTetramino, bottom)) bottom -= W;
+
+    currentTPos = bottom;
+    setState(true, Move.NONE);
+
+    drawTable();
 }
 
-// Cursed
 function rotate() {
-    currentTetramino.forEach(x => state[currentTPos + x] = false);
+    setState(false, Move.NONE);
 
-    currentTetramino = currentTetramino.map(x => {
+    let rotated = currentTetramino.map(x => {
         switch (x) {
             case 0:    return 0;
 
@@ -235,11 +301,16 @@ function rotate() {
         }
     });
 
-    currentTetramino.forEach(x => state[currentTPos + x] = true);
+    if (canBePlaced(rotated, currentTPos)) {
+        currentTetramino = rotated;
+    }
+
+    setState(true, Move.NONE);
 }
 
 function randomTetramino() {
-    return tetraminos[Math.random() * tetraminos.length | 0];
+    return tetraminos[4];
+    // return tetraminos[Math.random() * tetraminos.length | 0];
 }
 
 function drawNextTetramino() {
@@ -269,13 +340,6 @@ function drawTable() {
         if ((i+1) % W == 0) return x ? '#\n' : '.\n'
         else                return x ? '# ' : '. '
     }).join('');
-
-    // for (let y = 0; y < H; y++) {
-    //     for (let x = 0; x < W; x++) {
-    //        table.innerText += state[y * W + x] ? '# ' : '. ';
-    //     }
-    //     table.innerText += '\n';
-    // }
 }
 
 main();
