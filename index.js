@@ -42,11 +42,13 @@ const MAX_LEVEL = 32;
 const framesToDropTetramino = Array(MAX_LEVEL + 1).fill(0).map((_, i) => gravity(i));
 
 let frame = 0;
-let frameSinceTetraminoMove = 999;
-let level = 3;
+let frameSinceTetraminoMove = 0;
+let level = 1;
 
 let score = 0;
 let scoreLines = [0, 1, 3, 5, 8];
+
+const SPAWN = (W - 1) / 2 | 0;
 
 let currentTetramino = randomTetramino();
 let nextTetramino = randomTetramino();
@@ -106,7 +108,7 @@ function gameLoop() {
 function spawnNext() {
     clearLines();
 
-    currentTPos = (W - 1) / 2 | 0;
+    currentTPos = SPAWN;
 
     currentTetramino = nextTetramino;
     nextTetramino = randomTetramino();
@@ -130,7 +132,10 @@ function resetGame() {
     level = 1;
     score = 0;
     state.fill(false);
-    spawnNext();
+
+    currentTPos = SPAWN;
+    nextTetramino = randomTetramino();
+    currentTetramino = randomTetramino();
 }
 
 function clearLines() {
@@ -164,6 +169,7 @@ function clearLines() {
     updateScore(score + scoreLines[clearedLines]);
 }
 
+
 function updateScore(newScore) {
     score = newScore;
     
@@ -173,26 +179,29 @@ function updateScore(newScore) {
     document.getElementById("level").innerText = level;
 }
 
-function canBePlaced(tetramino, onPos) {
+
+function currentCanMove(move, position = currentTPos, tetramino = currentTetramino) {
     return tetramino
-        .map(x => x + onPos)
+        .map(x => getPositionInTableWithMove(x, move, position))
         .every(x => x < H * W && !state[x]);
 }
 
+
 /**
-  * @param {Move} move - how much
+  * @param {Move} move
   */
 function tryMove(move) {
-    setState(false, Move.NONE);
+    setState(false);
     
-    let canMove = canBePlaced(currentTetramino, currentTPos + move);
+    let canMove = currentCanMove(move);
 
     if (canMove) {
         // Move the center of the tetramino (0)
+        // Doing += move doesnt consider x overflow
         currentTPos = getPositionInTableWithMove(0, move);
     }
 
-    setState(true, Move.NONE);
+    setState(true);
 
     return canMove;
 }
@@ -202,8 +211,7 @@ function tryMove(move) {
   *  @param {Move} move - offset
   */
 function setState(draw, move = Move.NONE) {
-    currentTetramino
-        .forEach(x => state[getPositionInTableWithMove(x, move)] = draw);
+    currentTetramino.forEach(x => state[getPositionInTableWithMove(x, move)] = draw);
 }
 
 /**
@@ -213,9 +221,9 @@ function setState(draw, move = Move.NONE) {
 * @param {number} point
 * @param {Move} move
 */
-function getPositionInTableWithMove(point, move = Move.NONE) {
-    let x = mod(currentTPos, W);
-    let y = currentTPos / W | 0;
+function getPositionInTableWithMove(point, move = Move.NONE, position = currentTPos) {
+    let x = mod(position, W);
+    let y = position / W | 0;
 
     let dx = move % W;
     let dy = move / W | 0;
@@ -231,7 +239,8 @@ function getPositionInTableWithMove(point, move = Move.NONE) {
         px = 1;
         py = -1;
     } else if (point == W-1) {
-        px = -1, py = 1;
+        px = -1;
+        py = 1;
     }
 
     x = mod((x + px), W);
@@ -261,14 +270,14 @@ function input() {
 
 
 /**
- * Calculates position bottom up
+ * Finds a drop position bottom up
  */
 function dropGliched() {
     let bottom = (W * H) - mod(W - currentTPos, W)
 
     setState(false, Move.NONE);
 
-    while (!canBePlaced(currentTetramino, bottom)) bottom -= W;
+    while (!currentCanMove(Move.NONE, bottom)) bottom -= W;
 
     currentTPos = bottom;
     setState(true, Move.NONE);
@@ -277,7 +286,7 @@ function dropGliched() {
 }
 
 function rotate() {
-    setState(false, Move.NONE);
+    setState(false);
 
     let rotated = currentTetramino.map(x => {
         switch (x) {
@@ -301,16 +310,15 @@ function rotate() {
         }
     });
 
-    if (canBePlaced(rotated, currentTPos)) {
-        currentTetramino = rotated;
+    if (currentCanMove(Move.NONE, currentTPos, rotated)) {
+        currentTetramino = rotated
     }
 
-    setState(true, Move.NONE);
+    setState(true);
 }
 
 function randomTetramino() {
-    return tetraminos[4];
-    // return tetraminos[Math.random() * tetraminos.length | 0];
+    return tetraminos[Math.random() * tetraminos.length | 0];
 }
 
 function drawNextTetramino() {
