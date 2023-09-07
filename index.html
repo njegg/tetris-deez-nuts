@@ -25,6 +25,42 @@
                 display: flex;
                 gap: 2rem;
             }
+
+            #shop-title {
+                margin: 0;
+            }
+
+            input[type="checkbox"] {
+                display: none;
+            }
+
+            input[type="checkbox"]:not(:checked) + label {
+                color: rgb(0, 50, 0);
+                text-shadow: none;
+            }
+
+            input[type="checkbox"]:not(:checked) + label::before {
+                content: "[ ] ";
+            }
+
+            input[type="checkbox"]:checked + label::before {
+                content: "[x] ";
+                text-shadow: 0 0 5px green;
+                color: green;
+            }
+
+            #glitch-shop {
+                display: flex;
+                flex-direction: row;
+                flex-wrap: wrap;
+                justify-content: space-around;
+                width: 420px;
+            }
+
+            #glitch-shop span {
+                flex-basis: 50%;
+                margin-bottom: 0.5rem;
+            }
         </style>
     </head>
     <body>
@@ -45,6 +81,33 @@
                 <br>
                 next:
                 <pre id="next-tetramino"></pre>
+
+                <h3 id="shop-title">glitch shop (comming soon)</h3>
+                <br>
+
+                <div id="glitch-shop">
+                    <span class="checkbox">
+                        <input
+                            type="checkbox"
+                            id="overflow-glitch"
+                            onchange="activateGlitch(this)"
+                        />
+                        <label for="overflow-glitch">overflow</label>
+                    </span>
+                    
+                    <span>$0</span>
+
+                    <span class="checkbox">
+                        <input
+                            type="checkbox"
+                            id="wall-hack-glitch"
+                            onchange="activateGlitch(this)"
+                        />
+                        <label for="wall-hack-glitch">wall hack drop</label>
+                    </span>
+
+                    <span>$0</span>
+                </div>
             </div>
         </main>
 

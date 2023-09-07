@@ -69,6 +69,12 @@ const Move = Object.freeze({
     NONE: 0,
 });
 
+
+let drop = dropNormal;
+let dropGlitchActive = false;
+let overflowGlitchActive = false;
+
+
 function main() {
     window.addEventListener(
         "keydown",
@@ -262,17 +268,30 @@ function input() {
             case "a": tryMove(Move.LEFT); break;
             case "d": tryMove(Move.RIGHT); break;
             case "s": tryMove(Move.DOWN); break;
-            case " ": dropGliched(); break;
+            case " ": drop(); break;
             case "r": rotate(); break;
         }
     }
 }
 
 
+function dropNormal() {
+    setState(false);
+
+    while (currentCanMove(Move.DOWN)) {
+        currentTPos += W;
+    }
+
+    setState(true);
+
+    drawTable();
+}
+
+
 /**
  * Finds a drop position bottom up
  */
-function dropGliched() {
+function dropGlitched() {
     let bottom = (W * H) - mod(W - currentTPos, W)
 
     setState(false, Move.NONE);
@@ -349,6 +368,27 @@ function drawTable() {
         else                return x ? '# ' : '. '
     }).join('');
 }
+
+
+
+function activateGlitch(checkbox) {
+    switch (checkbox.id) {
+        case "wall-hack-glitch": {
+            dropGlitchActive = !dropGlitchActive;
+
+            drop = dropGlitchActive ? dropGlitched : dropNormal;
+            break;
+        }
+
+        case "overflow-glitch": {
+            checkbox.checked = false;
+            break;
+        }
+
+        default: throw new Error(`unknown glitch '${checkbox.id}'`);
+    }
+}
+
 
 main();
 
