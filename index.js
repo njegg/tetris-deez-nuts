@@ -94,8 +94,11 @@ function main() {
 
     resetCheckboxes();
 
-    let highScore = localStorage.getItem("highScore") || 0;
-    document.getElementById("high-score").innerText = highScore;
+    document.getElementById("high-score").innerText = localStorage.getItem("highScore") || 0;
+
+    if (window.isMobile()) {
+        showMobileControls();
+    }
 
     checkHighScore();
 
@@ -145,8 +148,8 @@ function spawnNext() {
 function resetGame() {
     checkHighScore();
 
-    level = 1;
-    score = 0;
+    updateScoreAndLevel(0);
+
     state.fill(false);
 
     currentTPos = SPAWN;
@@ -186,11 +189,11 @@ function clearLines() {
         }
     }
 
-    updateScore(score + scoreLines[clearedLines]);
+    updateScoreAndLevel(score + scoreLines[clearedLines]);
 }
 
 
-function updateScore(newScore) {
+function updateScoreAndLevel(newScore) {
     score = newScore;
     
     level = score / 5 + 1 | 0;
@@ -407,7 +410,7 @@ function activateGlitch(checkbox) {
             drop = dropGlitchActive ? dropGlitched : dropNormal;
 
             if (!dropGlitchUnlocked) {
-                updateScore(score - 5);
+                updateScoreAndLevel(score - 5);
             }
 
             break;
@@ -429,6 +432,17 @@ function resetCheckboxes() {
             checkbox.checked = false;
         }
     }
+}
+
+
+function showMobileControls() {
+    document.getElementById("mobile-controls").style = "display: grid";
+    document.getElementById("pc-controls").style = "display: none";
+}
+
+
+function mobileInput(button) {
+    inputQueue.push(button.name);
 }
 
 
