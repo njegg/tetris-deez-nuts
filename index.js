@@ -52,7 +52,7 @@ const SPAWN = (W - 1) / 2 | 0;
 
 let currentTetramino = randomTetramino();
 let nextTetramino = randomTetramino();
-let currentTPos = 5;
+let currentPos = 5;
 
 let state = new Array(H * W).fill(false);
 const NEXT_W = 5;
@@ -71,9 +71,14 @@ const Move = Object.freeze({
 
 
 let drop = dropNormal;
-let dropGlitchActive = false;
-let dropGlitchUnlocked = false;
-let overflowGlitchActive = false;
+let wallHackActive = false;
+let wallHackUnlocked = false;
+const WALLHACK_PRICE = 5;
+
+// let getBlockPosition = getBlockPositionOverflow;
+let getBlockPosition = getBlockPositionNormal;
+let overflowUnlocked = false;
+const OVERFLOW_PRICE = 5;
 
 
 function main() {
@@ -125,13 +130,13 @@ function gameLoop() {
 function spawnNext() {
     clearLines();
 
-    currentTPos = SPAWN;
+    currentPos = SPAWN;
 
     currentTetramino = nextTetramino;
     nextTetramino = randomTetramino();
 
     let canSpawn = currentTetramino
-        .map(x => x + currentTPos)
+        .map(x => x + currentPos)
         .every(dx => !state[dx]);
 
     if (!canSpawn) {
@@ -152,11 +157,17 @@ function resetGame() {
 
     state.fill(false);
 
-    currentTPos = SPAWN;
+    currentPos = SPAWN;
     nextTetramino = randomTetramino();
     currentTetramino = randomTetramino();
 
     drop = dropNormal;
+    wallHackActive = false;
+    wallHackUnlocked = false;
+
+    getBlockPosition = getBlockPositionNormal;
+    overflowUnlocked = false;
+
 
     resetCheckboxes();
 }
@@ -212,9 +223,9 @@ function checkHighScore() {
 }
 
 
-function currentCanMove(move, position = currentTPos, tetramino = currentTetramino) {
+function currentCanMove(move, position = currentPos, tetramino = currentTetramino) {
     return tetramino
-        .map(x => getPositionInTableWithMove(x, move, position))
+        .map(x => getBlockPosition(x, move, position))
         .every(x => x < H * W && !state[x]);
 }
 
@@ -230,7 +241,7 @@ function tryMove(move) {
     if (canMove) {
         // Move the center of the tetramino (0)
         // Doing += move doesnt consider x overflow
-        currentTPos = getPositionInTableWithMove(0, move);
+        currentPos = getBlockPosition(0, move);
     }
 
     setState(true);
@@ -239,34 +250,34 @@ function tryMove(move) {
 }
 
 /**
-  *  @param {boolean} draw - 'draws' tetramino to state table with false or true
-  *  @param {Move} move - offset
-  */
+ *  @param {boolean} draw - 'draws' tetramino to state table with false or true
+ *  @param {Move} move - offset
+ **/
 function setState(draw, move = Move.NONE) {
-    currentTetramino.forEach(x => state[getPositionInTableWithMove(x, move)] = draw);
+    currentTetramino.forEach(x => state[getBlockPosition(x, move)] = draw);
 }
 
 /**
-* @description moves a single block of tetramino by some amount
-* and moves overflows to correct row
-* 
-* @param {number} point
-* @param {Move} move
-*/
-function getPositionInTableWithMove(point, move = Move.NONE, position = currentTPos) {
-    let x = mod(position, W);
-    let y = position / W | 0;
+ * 
+ * Moves a single block of tetramino by some amount
+ * Also moves overflows to correct row and returns the final position
+ * 
+ * @param {number} point
+ * @param {Move} move
+ * 
+ **/
+function getBlockPositionOverflow(point, move = Move.NONE, tetraminoPos = currentPos) {
+    // Center position x, y
+    let cx = mod(tetraminoPos, W);
+    let cy = tetraminoPos / W | 0;
 
     let dx = move % W;
     let dy = move / W | 0;
 
-    x = mod((x + dx), W);
-    y = y + dy;
-
-
     let px = mod(point, W);
     let py = point / W | 0;
 
+    // Hardcoded edge cases i dont know how to fix
     if (point == -W+1) {
         px = 1;
         py = -1;
@@ -275,12 +286,56 @@ function getPositionInTableWithMove(point, move = Move.NONE, position = currentT
         py = 1;
     }
 
-    x = mod((x + px), W);
-    y = y + py;
+    // Adding point offset to move
+    dx += px;
+    dy += py;
+
+    // Adding offsets to center position
+    let x = mod((dx + cx), W);
+    let y = cy + dy;
 
     return y * W + x;
 }
 
+/**
+ *
+ * No overflow, walls on the sides
+ * 
+ * @param {number} point
+ * @param {Move} move
+ * @param {number} tetraminoPos
+ *
+ * @returns position in state table if legal, otherwise something illegal >W*H
+ *
+ **/
+function getBlockPositionNormal(point, move = Move.NONE, tetraminoPos = currentPos) {
+    let dx = point % W;
+    let cx = tetraminoPos % W;
+
+    switch (point) {
+        case W-1: dx = -1; break;
+        case W+1: dx = +1; break;
+        case -W-1: dx = -1; break;
+        case -W+1: dx = +1; break;
+    }
+
+    dx += move % W;
+
+    if (cx + dx < 0 || cx + dx >= W) return 69420;
+
+    return point + move + tetraminoPos;
+}
+
+
+
+/**
+ * 
+ * Modulo that works better with negative numbers 
+ * 
+ * @param {number} n
+ * @param {number} m
+ * 
+ **/
 function mod(n, m) {
   return ((n % m) + m) % m;
 }
@@ -305,7 +360,7 @@ function dropNormal() {
     setState(false);
 
     while (currentCanMove(Move.DOWN)) {
-        currentTPos += W;
+        currentPos += W;
     }
 
     setState(true);
@@ -315,16 +370,18 @@ function dropNormal() {
 
 
 /**
+ *
  * Finds a drop position bottom up
- */
+ *
+ **/
 function dropGlitched() {
-    let bottom = (W * H) - mod(W - currentTPos, W)
+    let bottom = (W * H) - mod(W - currentPos, W)
 
     setState(false, Move.NONE);
 
     while (!currentCanMove(Move.NONE, bottom)) bottom -= W;
 
-    currentTPos = bottom;
+    currentPos = bottom;
     setState(true, Move.NONE);
 
     drawTable();
@@ -351,11 +408,12 @@ function rotate() {
             case 2*W:  return -2;
             case -2:   return -2*W;
             case -2*W: return 2; 
+
             default: throw new Error(`you forgot the ${x}`);
         }
     });
 
-    if (currentCanMove(Move.NONE, currentTPos, rotated)) {
+    if (currentCanMove(Move.NONE, currentPos, rotated)) {
         currentTetramino = rotated
     }
 
@@ -396,7 +454,8 @@ function drawTable() {
 }
 
 
-
+// TODO: Glitch class or something
+// TODO: Generate html checkboxes based on instances
 function activateGlitch(checkbox) {
     switch (checkbox.id) {
         case "wall-hack-glitch": {
@@ -405,11 +464,11 @@ function activateGlitch(checkbox) {
                 return;
             };
 
-            dropGlitchActive = !dropGlitchActive;
+            wallHackActive = !wallHackActive;
 
-            drop = dropGlitchActive ? dropGlitched : dropNormal;
+            drop = wallHackActive ? dropGlitched : dropNormal;
 
-            if (!dropGlitchUnlocked) {
+            if (!wallHackUnlocked) {
                 updateScoreAndLevel(score - 5);
             }
 
@@ -417,7 +476,22 @@ function activateGlitch(checkbox) {
         }
 
         case "overflow-glitch": {
-            checkbox.checked = false;
+            if (score < 1) {
+                checkbox.checked = false;
+                return;
+            };
+
+            if (overflowUnlocked) {
+                checkbox.checked = true;
+                return;
+            }
+
+            overflowUnlocked = true;
+
+            getBlockPosition = getBlockPositionOverflow;
+
+            updateScoreAndLevel(score - 1);
+
             break;
         }
 
