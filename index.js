@@ -97,15 +97,11 @@ function main() {
         }
     );
 
-    resetCheckboxes();
-
-    document.getElementById("high-score").innerText = localStorage.getItem("highScore") || 0;
-
     if (window.isMobile()) {
         showMobileControls();
     }
 
-    checkHighScore();
+    resetGame();
 
     spawnNext();
     setInterval(gameLoop, 1 / 60 * 1000); // 60 FPS if pc fast // TODO: fix that
@@ -168,7 +164,6 @@ function resetGame() {
     getBlockPosition = getBlockPositionNormal;
     overflowUnlocked = false;
 
-
     resetCheckboxes();
 }
 
@@ -213,13 +208,16 @@ function updateScoreAndLevel(newScore) {
     document.getElementById("level").innerText = level;
 }
 
+
 function checkHighScore() {
-    let highScore = localStorage.getItem("highScore") || 0;
+    let highScore = +localStorage.getItem("highScore");
 
     if (score >= highScore) {
         localStorage.setItem("highScore", score);
-        document.getElementById("high-score").innerText = score;
+        highScore = score;
     }
+
+    document.getElementById("high-score").innerText = highScore;
 }
 
 
@@ -459,7 +457,7 @@ function drawTable() {
 function activateGlitch(checkbox) {
     switch (checkbox.id) {
         case "wall-hack-glitch": {
-            if (score < 5) {
+            if (!wallHackUnlocked && score < WALLHACK_PRICE) {
                 checkbox.checked = false;
                 return;
             };
@@ -468,15 +466,17 @@ function activateGlitch(checkbox) {
 
             drop = wallHackActive ? dropGlitched : dropNormal;
 
+            // If unlocked, you can toggle
             if (!wallHackUnlocked) {
-                updateScoreAndLevel(score - 5);
+                updateScoreAndLevel(score - WALLHACK_PRICE);
+                wallHackUnlocked = true;
             }
 
             break;
         }
 
         case "overflow-glitch": {
-            if (score < 1) {
+            if (!overflowUnlocked && score < OVERFLOW_PRICE) {
                 checkbox.checked = false;
                 return;
             };
@@ -490,7 +490,7 @@ function activateGlitch(checkbox) {
 
             getBlockPosition = getBlockPositionOverflow;
 
-            updateScoreAndLevel(score - 1);
+            updateScoreAndLevel(score - OVERFLOW_PRICE);
 
             break;
         }
