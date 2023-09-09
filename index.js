@@ -46,7 +46,7 @@ let frameSinceTetraminoMove = 0;
 let level = 1;
 
 let score = 0;
-let scoreLines = [0, 1, 3, 5, 8];
+const scoreLines = [0, 1, 3, 5, 8];
 
 const SPAWN = (W - 1) / 2 | 0;
 
@@ -69,16 +69,99 @@ const Move = Object.freeze({
     NONE: 0,
 });
 
-
 let drop = dropNormal;
-let wallHackActive = false;
-let wallHackUnlocked = false;
-const WALLHACK_PRICE = 5;
-
-// let getBlockPosition = getBlockPositionOverflow;
 let getBlockPosition = getBlockPositionNormal;
-let overflowUnlocked = false;
-const OVERFLOW_PRICE = 5;
+
+class Glitch {
+    isUnlocked = false;
+    isActive = false;
+    
+    /**
+     * @param {string} name
+     * @param {number} price
+     * @param {boolean} toggleable
+     * @param {(alreadyActive: boolean) => void} onActivate
+     **/
+    constructor(name, price, toggleable, onActivate) {
+        this.name = name;
+        this.price = price;
+        this.toggleable = toggleable;
+
+        this.onActivate = onActivate;
+
+        /** @param {HTMLInputElement} checkbox */
+        this.activate = (checkbox) => {
+            if (!this.isUnlocked && score < this.price) { // you broke
+                checkbox.checked = false;
+                return;
+            }
+
+            if (!this.isUnlocked) { // has mone
+                this.isUnlocked = true;
+                this.isActive = true;
+
+                updateScoreAndLevel(score - this.price);
+
+                this.onActivate(false);
+
+                return;
+            }
+
+            
+            if (!toggleable) { // Already unlocked, cant deactivate
+                checkbox.checked = true;
+                return;
+            }
+
+            this.onActivate(this.isActive);
+            this.isActive = !this.isActive;
+        }
+    }
+}
+
+const glitches = [
+    new Glitch("wall_hack", 5, true, (alreadyActive) => {
+        drop = alreadyActive ? dropNormal : dropGlitched;
+    }),
+
+    new Glitch("overflow", 5, false, (_) => {
+        getBlockPosition = getBlockPositionOverflow;
+    }),
+];
+
+const glitchShopElement = document.getElementById("glitch-shop");
+
+/* <span class="checkbox">
+        <input
+            type="checkbox"
+            id="name"
+            onchange="f(this)"
+        />
+        <label for="name">name</label>
+    </span>
+    <span>$price</span> */
+glitches.forEach(g => {
+    let checkboxContainer = document.createElement("span");
+    checkboxContainer.classList.add("checkbox");
+
+    let checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.id = g.name;
+    checkbox.addEventListener("change", () => { g.activate(checkbox) }  , false)
+
+    let label = document.createElement("label");
+    label.htmlFor = g.name;
+    label.innerText = g.name;
+
+    checkboxContainer.appendChild(checkbox);
+    checkboxContainer.appendChild(label);
+
+    let price = document.createElement("span");
+    price.innerHTML = `$${g.price}`;
+
+    glitchShopElement.appendChild(checkboxContainer);
+    glitchShopElement.appendChild(price);
+});
 
 
 function main() {
@@ -450,55 +533,6 @@ function drawTable() {
         else                return x ? '# ' : '. '
     }).join('');
 }
-
-
-// TODO: Glitch class or something
-// TODO: Generate html checkboxes based on instances
-function activateGlitch(checkbox) {
-    switch (checkbox.id) {
-        case "wall-hack-glitch": {
-            if (!wallHackUnlocked && score < WALLHACK_PRICE) {
-                checkbox.checked = false;
-                return;
-            };
-
-            wallHackActive = !wallHackActive;
-
-            drop = wallHackActive ? dropGlitched : dropNormal;
-
-            // If unlocked, you can toggle
-            if (!wallHackUnlocked) {
-                updateScoreAndLevel(score - WALLHACK_PRICE);
-                wallHackUnlocked = true;
-            }
-
-            break;
-        }
-
-        case "overflow-glitch": {
-            if (!overflowUnlocked && score < OVERFLOW_PRICE) {
-                checkbox.checked = false;
-                return;
-            };
-
-            if (overflowUnlocked) {
-                checkbox.checked = true;
-                return;
-            }
-
-            overflowUnlocked = true;
-
-            getBlockPosition = getBlockPositionOverflow;
-
-            updateScoreAndLevel(score - OVERFLOW_PRICE);
-
-            break;
-        }
-
-        default: throw new Error(`unknown glitch '${checkbox.id}'`);
-    }
-}
-
 
 function resetCheckboxes() {
     for (let span of document.getElementsByClassName("checkbox")) {

@@ -10,6 +10,11 @@
                 src: url(hzeep.ttf);
             }
 
+            :root {
+              --disabled: rgb(0, 50, 0);
+            }
+
+
             body {
                 font-family: hzeep, monospace;
                 background: black;
@@ -41,7 +46,7 @@
             }
 
             input[type="checkbox"]:not(:checked) + label {
-                color: rgb(0, 50, 0);
+                color: var(--disabled);
                 text-shadow: none;
             }
 
@@ -90,7 +95,7 @@
 
             small {
                 line-height: 50px;
-                color: rgb(0, 50, 0);
+                color: var(--disabled);
                 text-shadow: none;
             }
         </style>
@@ -117,29 +122,7 @@
                 <h3 id="shop-title">glitch shop</h3>
                 <br>
 
-                <div id="glitch-shop">
-                    <span class="checkbox">
-                        <input
-                            type="checkbox"
-                            id="wall-hack-glitch"
-                            onchange="activateGlitch(this)"
-                        />
-                        <label for="wall-hack-glitch">wall hack</label>
-                    </span>
-
-                    <span>$5</span>
-
-                    <span class="checkbox">
-                        <input
-                            type="checkbox"
-                            id="overflow-glitch"
-                            onchange="activateGlitch(this)"
-                        />
-                        <label for="overflow-glitch">overflow</label>
-                    </span>
-
-                    <span>$5</span>
-                </div>
+                <div id="glitch-shop"></div>
             </div>
         </main>
 
