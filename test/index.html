@@ -3,7 +3,7 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, user-scalable=no">
-        <title>tetris-deez-nuts</title>
+        <title>tetris</title>
         <style>
             @font-face {
                 font-family: hzeep;
@@ -100,56 +100,16 @@
             }
         </style>
     </head>
-    <body>
-        <h1>Tetris deez nuts</h1>
-        <h3>high score: <span id="high-score"></span></h3>
+    <body markdown="1">
+        # Tetris deez nuts
 
-        <main>
-            <div>
-                level = <span id="level">1</span>
-                <br>
-                score = <span id="score">0</span>
-                <br>
+        - markdown test
 
-                <pre id='table' />
-            </div>
+        ---
 
-            <div>
-                <br>
-                next:
-                <pre id="next-tetramino"></pre>
+        | yeet
 
-                <h3 id="shop-title">glitch shop</h3>
-                <br>
-
-                <div id="glitch-shop"></div>
-            </div>
-        </main>
-
-        <div id="mobile-controls">
-            <button onclick="mobileInput(this)" name="r">q</button>
-            <button onclick="mobileInput(this)" name="r">w</button>
-            <button onclick="mobileInput(this)" name="r">e</button>
-            <button onclick="mobileInput(this)" name="a">a</button>
-            <button onclick="mobileInput(this)" name="s">s</button>
-            <button onclick="mobileInput(this)" name="d">d</button>
-            <button
-                onclick="mobileInput(this)"
-                id="space"
-                name=" "
-            >
-                _
-            </button>
-        </div>
-
-<pre id="pc-controls">
-a      - left
-d      - right
-s      - faster drop
-e      - rotate
-space  - drop
-</pre>
-
+        > asdasd
     </body>
     
     <script>
@@ -159,6 +119,5 @@ space  - drop
             return check;
         };
     </script>
-    <script src="index.js"></script>
 </html>
 

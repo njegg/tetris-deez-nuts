@@ -37,40 +37,12 @@ const tetraminos = [
     ]
 ];
 
-const gravity = (level) => Math.pow((0.8 - (level-1) * 0.007), level-1) * 60;
-const MAX_LEVEL = 32;
-const framesToDropTetramino = Array(MAX_LEVEL + 1).fill(0).map((_, i) => gravity(i));
-
-let frame = 0;
-let frameSinceTetraminoMove = 0;
-let level = 1;
-
-let score = 0;
-const scoreLines = [0, 1, 3, 5, 8];
-
-const SPAWN = (W - 1) / 2 | 0;
-
-let currentTetramino = randomTetramino();
-let nextTetramino = randomTetramino();
-let currentPos = 5;
-
-let state = new Array(H * W).fill(false);
-const NEXT_W = 5;
-let nextTetraminoState = new Array(NEXT_W * NEXT_W).fill(false);
-let nextTetraminoHTML = document.getElementById('next-tetramino');
-let table = document.getElementById('table');
-
-let inputQueue = [];
-
 const Move = Object.freeze({
     DOWN: W,
     LEFT: -1,
     RIGHT: 1,
     NONE: 0,
 });
-
-let drop = dropNormal;
-let getBlockPosition = getBlockPositionNormal;
 
 class Glitch {
     isUnlocked = false;
@@ -119,13 +91,48 @@ class Glitch {
     }
 }
 
+let drop = dropNormal;
+let getBlockPosition = getBlockPositionNormal;
+let randomTetramino = randomTetraminoNormal;
+
+
+const gravity = (level) => Math.pow((0.8 - (level-1) * 0.007), level-1) * 60;
+const MAX_LEVEL = 32;
+const framesToDropTetramino = Array(MAX_LEVEL + 1).fill(0).map((_, i) => gravity(i));
+
+let frame = 0;
+let frameSinceTetraminoMove = 0;
+let level = 1;
+
+let score = 0;
+const scoreLines = [0, 1, 3, 5, 8];
+
+const SPAWN = (W - 1) / 2 | 0;
+
+let currentTetramino = randomTetramino();
+let nextTetramino = randomTetramino();
+let currentPos = 5;
+
+let state = new Array(H * W).fill(false);
+const NEXT_W = 5;
+let nextTetraminoState = new Array(NEXT_W * NEXT_W).fill(false);
+let nextTetraminoHTML = document.getElementById('next-tetramino');
+let table = document.getElementById('table');
+
+let inputQueue = [];
+
+
 const glitches = [
+    new Glitch("overflow", 3, false, (_) => {
+        getBlockPosition = getBlockPositionOverflow;
+    }),
+
     new Glitch("wall_hack", 5, true, (alreadyActive) => {
         drop = alreadyActive ? dropNormal : dropGlitched;
     }),
 
-    new Glitch("overflow", 5, false, (_) => {
-        getBlockPosition = getBlockPositionOverflow;
+    new Glitch("1/5 for I", 15, false, (_) => {
+        randomTetramino = randomTetraminoHigherChanceForI;
     }),
 ];
 
@@ -501,9 +508,16 @@ function rotate() {
     setState(true);
 }
 
-function randomTetramino() {
+
+function randomTetraminoNormal() {
     return tetraminos[Math.random() * tetraminos.length | 0];
 }
+
+
+function randomTetraminoHigherChanceForI() {
+    return Math.random() <= 0.2 ? tetraminos[1] : randomTetraminoNormal();
+}
+
 
 function drawNextTetramino() {
     let shiftToCenter = NEXT_W * NEXT_W / 2 | 0
