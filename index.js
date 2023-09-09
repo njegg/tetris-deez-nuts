@@ -44,6 +44,7 @@ const Move = Object.freeze({
     NONE: 0,
 });
 
+
 class Glitch {
     isUnlocked = false;
     isActive = false;
@@ -103,6 +104,7 @@ const framesToDropTetramino = Array(MAX_LEVEL + 1).fill(0).map((_, i) => gravity
 let frame = 0;
 let frameSinceTetraminoMove = 0;
 let level = 1;
+let running = false;
 
 let score = 0;
 const scoreLines = [0, 1, 3, 5, 8];
@@ -197,11 +199,15 @@ function main() {
     setInterval(gameLoop, 1 / 60 * 1000); // 60 FPS if pc fast // TODO: fix that
 }
 
-function gameLoop() {
+async function gameLoop() {
     frame++;
 
     input();
     drawTable();
+
+    if (!running) {
+        
+    }
 
     if (frame % framesToDropTetramino[level] | 0 != 0) return; 
 

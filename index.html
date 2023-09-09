@@ -98,9 +98,22 @@
                 color: var(--disabled);
                 text-shadow: none;
             }
+
+            #test-link {
+                text-decoration: none;
+                color: green;
+                position: absolute;
+                top: 0;
+                right: 0;
+                padding: 0.2em 0.5em;
+                border-left: 2px dotted var(--disabled);
+                border-bottom: 2px dotted var(--disabled);
+            }
         </style>
     </head>
     <body>
+        <a id="test-link" href="/test">?</a>
+
         <h1>Tetris deez nuts</h1>
         <h3>high score: <span id="high-score"></span></h3>
 
@@ -119,7 +132,6 @@
                 next:
                 <pre id="next-tetramino"></pre>
 
-                <h3 id="shop-title">glitch shop</h3>
                 <br>
 
                 <div id="glitch-shop"></div>
@@ -146,7 +158,7 @@
 a      - left
 d      - right
 s      - faster drop
-e      - rotate
+r      - rotate
 space  - drop
 </pre>
 
